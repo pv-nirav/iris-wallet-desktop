@@ -97,7 +97,7 @@ def test_start_node_for_embedded_option_generic_exception(wallet_transfer_select
 
 @patch('src.utils.logging.logger.info')
 @patch('src.utils.local_store.LocalStore.get_value')
-@patch('src.utils.helpers.get_bitcoin_config')
+@patch('src.viewmodels.wallet_and_transfer_selection_viewmodel.get_bitcoin_config')
 def test_on_ln_node_start_success_with_keyring_enabled(mock_bitcoin_config, mock_get_value, mock_logger, wallet_transfer_selection_view_model):
     """Test on_ln_node_start success path with keyring enabled"""
     # Mock dependencies
