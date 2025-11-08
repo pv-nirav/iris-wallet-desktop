@@ -55,5 +55,5 @@ jobs:
             -p no:faulthandler \
             --cov=src \
             --cov-fail-under=90 \
-            -n 3 \
+            -n 1 \
             unit_tests/tests
