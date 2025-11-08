@@ -11,6 +11,7 @@ jobs:
     env:
       QT_QPA_PLATFORM: offscreen
       TZ: Asia/Kolkata
+      PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
       
     steps:
       - name: Checkout repository
@@ -46,12 +47,30 @@ jobs:
       - name: Install Python dependencies
         uses: ./.github/actions/install-python-dependencies
 
+      - name: Install CI keyring backend
+        run: |
+          poetry run python -m pip install --upgrade pip --disable-pip-version-check
+          poetry run pip install --disable-pip-version-check --no-input keyring
+          poetry run python - <<'PY'
+          import sys
+          try:
+              import keyring  # noqa: F401
+              from keyring.backends.null import Keyring  # noqa: F401
+              print('Keyring module available')
+          except Exception as e:
+              print('Keyring import failed:', e)
+              sys.exit(1)
+          PY
+
       - name: Compile QT resources
         run: |
-                poetry run pyside6-rcc src/resources.qrc -o src/resources_rc.py
+          poetry run pyside6-rcc src/resources.qrc -o src/resources_rc.py
       - name: Run unit tests (fail if coverage < 90%)
         run: |
           poetry run pytest -v --maxfail=1 --disable-warnings \
             -p no:faulthandler \
-            --cov=src --cov-report=term --cov-fail-under=90 -n 1 \
+            --cov=src --cov-branch \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=xml:coverage.xml \
+            --cov-fail-under=90 -n 3 \
             unit_tests/tests
