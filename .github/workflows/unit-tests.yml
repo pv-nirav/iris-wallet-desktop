@@ -69,14 +69,8 @@ jobs:
           poetry run pyside6-rcc src/resources.qrc -o src/resources_rc.py
       - name: Run unit tests (fail if coverage < 90%)
         run: |
-          # Make pytest deterministic and lean
-          export PYTEST_ADDOPTS=""
-          export PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
-          export PYTHONHASHSEED=0
-          export PYTEST_QT_API=pyside6
           poetry run pytest -v --maxfail=1 --disable-warnings \
             -p no:faulthandler \
-            -p no:xdist \
-            -p pytest_cov \
-            --cov-fail-under=90 \
+            --cov=src --cov-branch \
+            --cov-fail-under=90 -n 3 \
             unit_tests/tests
