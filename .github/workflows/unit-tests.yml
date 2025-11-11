@@ -52,10 +52,6 @@ jobs:
       - name: Install Python dependencies
         uses: ./.github/actions/install-python-dependencies
 
-      - name: Install additional Python dependencies for unit test
-        run: |
-          poetry run pip install --disable-pip-version-check --no-input pytest-cov pytest-xdist pytest-html
-
       - name: Install keyring backends in Poetry venv
         run: |
           poetry run pip install --disable-pip-version-check --no-input keyring keyrings.alt
