@@ -1,0 +1,76 @@
+name: Unit Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    env:
+      QT_QPA_PLATFORM: offscreen
+      TZ: Asia/Kolkata
+      PYTHON_KEYRING_BACKEND: keyrings.alt.file.PlaintextKeyring
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12.3 environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.3"
+
+      - name: Install required system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            libxcb-cursor0 \
+            libegl1 \
+            libgl1
+          sudo apt-get install ruby-dev build-essential libgirepository1.0-dev python3-dev -y && sudo gem i fpm -f
+          sudo apt-get update && sudo apt-get install -y libfuse2 # Required for AppImage creation
+          
+      - name: Set environment variables from GitHub Secrets and generate config.py
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          AUTH_URI: ${{ secrets.AUTH_URI }}
+          TOKEN_URI: ${{ secrets.TOKEN_URI }}
+          AUTH_PROVIDER_CERT_URL: ${{ secrets.AUTH_PROVIDER_CERT_URL }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          cd src/utils
+          python generate_config.py
+
+      - name: Preinstall keyring backends (system Python)
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          pip install --disable-pip-version-check --no-input keyring keyrings.alt
+
+      - name: Install Python dependencies
+        uses: ./.github/actions/install-python-dependencies
+
+      - name: Install keyring backends in Poetry venv
+        run: |
+          poetry run pip install --disable-pip-version-check --no-input keyring keyrings.alt
+
+      - name: Set KEYRING_HOME env
+        run: |
+          echo "KEYRING_HOME=$RUNNER_TEMP/keyring" >> "$GITHUB_ENV"
+
+      - name: Ensure keyring storage directory exists
+        run: |
+          mkdir -p "$KEYRING_HOME"
+
+      - name: Compile QT resources
+        run: |
+          poetry run pyside6-rcc src/resources.qrc -o src/resources_rc.py
+      - name: Run unit tests (fail if coverage < 90%)
+        run: |
+          poetry run pytest -v --maxfail=1 --disable-warnings \
+            -p no:faulthandler \
+            --cov=src --cov-branch \
+            --cov-fail-under=90 -n 3 \
+            unit_tests/tests
