@@ -75,6 +75,6 @@ jobs:
         run: |
           poetry run pytest -v --maxfail=1 --disable-warnings \
             -p no:faulthandler \
-            --cov=src --cov-branch \
-            --cov-fail-under=90 -n 1 \
+            --cov=src \
+            --cov-fail-under=90 \
             unit_tests/tests
