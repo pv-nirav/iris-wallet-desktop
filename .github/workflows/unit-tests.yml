@@ -67,10 +67,12 @@ jobs:
       - name: Compile QT resources
         run: |
           poetry run pyside6-rcc src/resources.qrc -o src/resources_rc.py
+
       - name: Run unit tests (fail if coverage < 90%)
         run: |
           poetry run pytest -v --maxfail=1 --disable-warnings \
             -p no:faulthandler \
             --cov=src \
             --cov-fail-under=90 \
+            -n=1 \
             unit_tests/tests
