@@ -74,30 +74,18 @@ jobs:
             -p no:faulthandler \
             --cov=src \
             --cov-fail-under=90 \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:coverage-report \
+            --html=coverage-report/pytest_report.html \
             -n=1 \
             unit_tests/tests
 
-      - name: Generate coverage HTML report
-        run: |
-          poetry run coverage html -d coverage_html
-
-      - name: Upload coverage report artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload coverage artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
         with:
-          path: coverage_html
-
-  deploy:
-    needs: tests
-    runs-on: ubuntu-22.04
-    permissions:
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          name: coverage-report
+          path: |
+            coverage.xml
+            coverage-report/**
+          if-no-files-found: error
